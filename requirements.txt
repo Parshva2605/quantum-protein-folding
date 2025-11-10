@@ -1,0 +1,16 @@
+# Quantum Protein Structure Predictor - Requirements
+
+# Core quantum computing
+qiskit>=2.0.0
+qiskit-algorithms>=0.3.0
+qiskit-optimization>=0.6.0
+
+# Scientific computing
+numpy>=1.24.0
+scipy>=1.10.0
+
+# Visualization
+matplotlib>=3.7.0
+
+# Utilities
+python-dateutil>=2.8.0

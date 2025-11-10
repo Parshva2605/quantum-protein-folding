@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧬 Quantum Protein Structure Predictor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 30px;
+        }
+        
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1.1em;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .sequence-input {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            text-transform: uppercase;
+        }
+        
+        .btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .advanced-options {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .status-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .status-box.show {
+            display: block;
+            animation: slideDown 0.3s;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; max-height: 0; }
+            to { opacity: 1; max-height: 500px; }
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .result-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .result-sequence {
+            font-family: 'Courier New', monospace;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .result-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .download-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        
+        .btn-download {
+            padding: 10px 20px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+        
+        .btn-download:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        
+        .btn-view {
+            padding: 10px 20px;
+            background: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+        
+        .btn-view:hover {
+            background: #1976d2;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .alert-error {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            color: #c62828;
+        }
+        
+        .alert-success {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            color: #2e7d32;
+        }
+        
+        .alert-warning {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            color: #e65100;
+        }
+        
+        .file-upload {
+            border: 2px dashed #667eea;
+            padding: 40px;
+            text-align: center;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .file-upload:hover {
+            background: #f8f9ff;
+            border-color: #764ba2;
+        }
+        
+        .file-upload input[type="file"] {
+            display: none;
+        }
+        
+        .examples {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .example-seq {
+            display: inline-block;
+            background: white;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        
+        .example-seq:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧬⚛️ Quantum Protein Structure Predictor</h1>
+            <p>Predict protein structures using quantum computing</p>
+        </div>
+        
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('single')">Single Sequence</button>
+                <button class="tab" onclick="showTab('batch')">Batch Upload</button>
+            </div>
+            
+            <!-- Single Sequence Tab -->
+            <div id="single-tab" class="tab-content active">
+                <div class="form-group">
+                    <label for="sequence">Amino Acid Sequence (3-10 residues recommended)</label>
+                    <input type="text" id="sequence" class="sequence-input" 
+                           placeholder="Enter sequence (e.g., ACDEFGH)" 
+                           maxlength="20">
+                    <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                        ⚠️ Maximum 10 residues for classical simulation. Longer sequences require quantum hardware.
+                    </div>
+                </div>
+                
+                <div class="examples">
+                    <strong>Quick Examples (click to use):</strong><br>
+                    <span class="example-seq" onclick="useExample('GYL')">GYL</span>
+                    <span class="example-seq" onclick="useExample('ACDE')">ACDE</span>
+                    <span class="example-seq" onclick="useExample('FGHIK')">FGHIK</span>
+                    <span class="example-seq" onclick="useExample('ACDEFGH')">ACDEFGH</span>
+                    <span class="example-seq" onclick="useExample('ACDEFGHI')">ACDEFGHI</span>
+                </div>
+                
+                <div class="advanced-options">
+                    <h3>Advanced Options</h3>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label for="ansatz">Ansatz Type</label>
+                            <select id="ansatz">
+                                <option value="efficient_su2">EfficientSU2 (Recommended)</option>
+                                <option value="twolocal">TwoLocal</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="optimizer">Optimizer</label>
+                            <select id="optimizer">
+                                <option value="COBYLA">COBYLA (Recommended)</option>
+                                <option value="SPSA">SPSA</option>
+                                <option value="SLSQP">SLSQP</option>
+                                <option value="L_BFGS_B">L-BFGS-B</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="max_iter">Max Iterations</label>
+                            <input type="number" id="max_iter" value="50" min="10" max="200">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="reps">Circuit Repetitions</label>
+                            <input type="number" id="reps" value="2" min="1" max="5">
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" onclick="startPrediction()">
+                    🚀 Start Prediction
+                </button>
+                
+                <div id="status" class="status-box"></div>
+                <div id="results"></div>
+            </div>
+            
+            <!-- Batch Upload Tab -->
+            <div id="batch-tab" class="tab-content">
+                <div class="file-upload" onclick="document.getElementById('file-input').click()">
+                    <input type="file" id="file-input" accept=".txt,.fasta" onchange="uploadBatch()">
+                    <h3>📁 Upload Sequence File</h3>
+                    <p>Click to select a text file with one sequence per line</p>
+                    <p style="color: #666; font-size: 0.9em;">Supported formats: .txt, .fasta</p>
+                </div>
+                
+                <div id="batch-status" class="status-box"></div>
+                <div id="batch-results"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentJobId = null;
+        let statusCheckInterval = null;
+        
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+        
+        function useExample(sequence) {
+            document.getElementById('sequence').value = sequence;
+        }
+        
+        async function startPrediction() {
+            const sequence = document.getElementById('sequence').value.trim().toUpperCase();
+            const ansatz = document.getElementById('ansatz').value;
+            const optimizer = document.getElementById('optimizer').value;
+            const max_iter = document.getElementById('max_iter').value;
+            const reps = document.getElementById('reps').value;
+            
+            if (!sequence) {
+                showAlert('Please enter a sequence', 'error');
+                return;
+            }
+            
+            showStatus('Starting prediction...', 'loading');
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sequence, ansatz, optimizer, max_iter, reps })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentJobId = data.job_id;
+                    checkStatus();
+                } else {
+                    showAlert(data.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        }
+        
+        async function checkStatus() {
+            if (!currentJobId) return;
+            
+            statusCheckInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/status/${currentJobId}`);
+                    const data = await response.json();
+                    
+                    if (data.status === 'completed') {
+                        clearInterval(statusCheckInterval);
+                        showStatus('✅ Prediction complete!', 'success');
+                        displayResults(data.result);
+                    } else if (data.status === 'failed') {
+                        clearInterval(statusCheckInterval);
+                        showAlert('Prediction failed: ' + data.error, 'error');
+                    } else {
+                        showStatus('⏳ Running VQE optimization...', 'loading');
+                    }
+                } catch (error) {
+                    clearInterval(statusCheckInterval);
+                    showAlert('Error checking status: ' + error.message, 'error');
+                }
+            }, 2000);
+        }
+        
+        function showStatus(message, type) {
+            const statusBox = document.getElementById('status');
+            statusBox.className = 'status-box show';
+            
+            if (type === 'loading') {
+                statusBox.innerHTML = `<div class="spinner"></div><p style="text-align:center">${message}</p>`;
+            } else if (type === 'success') {
+                statusBox.innerHTML = `<p style="color:#4caf50; font-weight:bold">${message}</p>`;
+            }
+        }
+        
+        function showAlert(message, type) {
+            const statusBox = document.getElementById('status');
+            statusBox.className = 'status-box show';
+            statusBox.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        }
+        
+        function displayResults(result) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <div class="result-card">
+                    <div class="result-header">
+                        <div class="result-sequence">${result.sequence}</div>
+                        <div>${result.valid_structure ? '✅ Valid' : '❌ Invalid'}</div>
+                    </div>
+                    
+                    <div class="result-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">${result.energy.toFixed(3)}</div>
+                            <div class="stat-label">Ground Energy</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${result.qubits}</div>
+                            <div class="stat-label">Qubits Used</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${result.iterations}</div>
+                            <div class="stat-label">Iterations</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${result.radius_of_gyration.toFixed(2)} Å</div>
+                            <div class="stat-label">Radius</div>
+                        </div>
+                    </div>
+                    
+                    <div class="download-buttons">
+                        <a href="/viewer/${result.job_id}" class="btn-view" target="_blank">
+                            🔬 View 3D Structure
+                        </a>
+                        <a href="/download/${result.job_id}/pdb" class="btn-download">
+                            📄 Download PDB
+                        </a>
+                        <a href="/download/${result.job_id}/image" class="btn-download">
+                            🖼️ Download Image
+                        </a>
+                        <a href="/download/${result.job_id}/convergence" class="btn-download">
+                            📈 Download Convergence
+                        </a>
+                        <a href="/download/${result.job_id}/report" class="btn-download">
+                            📋 Download Report (JSON)
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+        
+        async function uploadBatch() {
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const statusBox = document.getElementById('batch-status');
+            statusBox.className = 'status-box show';
+            statusBox.innerHTML = '<div class="spinner"></div><p style="text-align:center">Uploading and processing...</p>';
+            
+            try {
+                const response = await fetch('/batch', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusBox.innerHTML = `<p style="color:#4caf50">✅ Processing ${data.count} sequences...</p>`;
+                    // TODO: Monitor batch jobs
+                } else {
+                    statusBox.innerHTML = `<div class="alert alert-error">${data.error}</div>`;
+                }
+            } catch (error) {
+                statusBox.innerHTML = `<div class="alert alert-error">Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
